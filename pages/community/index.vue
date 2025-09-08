@@ -27,9 +27,9 @@
                             <p>
                                 Enjoy our resources and are feeling generous?
                                 <br/>
-                                You can support the development of these Resources by supporting us on
-                                <a href="https://www.paypal.me/RockinChaos" target="_blank" rel="noopener noreferrer">PayPal</a> or
-                                <a href="https://www.patreon.com/rockinchaos" target="_blank" rel="noopener noreferrer">Patreon</a>.
+                                You can support the development of these Resources by supporting us as a
+                                <a href="https://github.com/sponsors/RockinChaos" target="_blank" rel="noopener noreferrer">GitHub Sponsor</a> or on
+                                <a href="https://ko-fi.com/RockinChaos" target="_blank" rel="noopener noreferrer">Ko-Fi</a>.
                             </p>
                         </div>
                     </div>

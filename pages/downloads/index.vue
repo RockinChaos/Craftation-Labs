@@ -2,11 +2,11 @@
     <div>
         <div class="section">
             <div class="container">
-                <b-notification type="is-patreon">
+                <b-notification type="is-github">
                     <p>
-                        If you'd like to support the development of these Resources, please consider supporting us on
-                        <a href="https://www.paypal.me/RockinChaos" target="_blank" rel="noopener noreferrer">PayPal</a> or
-                        <a href="https://www.patreon.com/rockinchaos" target="_blank" rel="noopener noreferrer">Patreon</a>.
+                        If you'd like to support the development of these Resources, please consider supporting us as a
+                        <a href="https://github.com/sponsors/RockinChaos" target="_blank" rel="noopener noreferrer">GitHub Sponsor</a> or on
+                        <a href="https://ko-fi.com/RockinChaos" target="_blank" rel="noopener noreferrer">Ko-Fi</a>.
                     </p>
                 </b-notification>
                 <ClientOnly>
