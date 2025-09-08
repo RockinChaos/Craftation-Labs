@@ -35,13 +35,11 @@ const pluginsDefaults = {
         description: "A spigot-bungee handshake",
         downloadUrl: null,
         git: "RockinChaos/CloudSync",
-        premiumUrl: "https://www.spigotmc.org/resources/cloudsync.93382/",
         commits: null,
         lastCommits: null,
         build: null,
         version: null,
         timestamp: null,
-        premium: false,
         downloads: ['https://img.shields.io/github/downloads/RockinChaos/CloudSync/total.json', 'https://img.shields.io/spiget/downloads/93382.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'MINECRAFT', color: 'light' }]
     },
