@@ -5,7 +5,7 @@ import "./style/main.scss";
 
 import { library } from "@fortawesome/fontawesome-svg-core"
 import { faSync, faExternalLinkSquareAlt, faDownload, faChevronDown, faChevronUp, faUsers, faFileAlt, faFileArchive, faClipboard, faCheckCircle, faTools, faSun, faMoon, faArrowUp, faArrowDown, faAngleRight, faSearch } from "@fortawesome/free-solid-svg-icons";
-import { faGithub, faDiscord, faJava, faPatreon } from "@fortawesome/free-brands-svg-icons";
+import { faGithub, faDiscord, faJava, faGitSquare } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 import KonamiCode from "vue-konami-code";
@@ -19,7 +19,7 @@ hljs.registerLanguage('yaml', yaml);
 
 import ExternalData from "./mixins/external-data";
 
-library.add(faSync, faUsers, faExternalLinkSquareAlt, faChevronDown, faChevronUp, faGithub, faFileAlt, faFileArchive, faClipboard, faDiscord, faJava, faDownload, faPatreon, faCheckCircle, faTools, faSun, faMoon, faArrowUp, faArrowDown, faAngleRight, faSearch);
+library.add(faSync, faUsers, faExternalLinkSquareAlt, faChevronDown, faChevronUp, faGithub, faFileAlt, faFileArchive, faClipboard, faDiscord, faJava, faDownload, faGitSquare, faCheckCircle, faTools, faSun, faMoon, faArrowUp, faArrowDown, faAngleRight, faSearch);
 Vue.component('fa-icon', FontAwesomeIcon);
 
 Vue.use(Buefy, {

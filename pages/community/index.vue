@@ -36,7 +36,7 @@
                     <div class="column">
                         <Discord />
                         <Github />
-                        <Patreon />
+                        <Sponsor />
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@
 
 <script>
 import Discord from "../../components/SocialDiscord";
-import Patreon from "../../components/SocialPatreon";
+import Sponsor from "../../components/SocialSponsor";
 import Github from "../../components/SocialGithub";
 
 export const attributes = {
@@ -57,7 +57,7 @@ export default {
     components: {
         Discord,
         Github,
-        Patreon,
+        Sponsor,
     }
 };
 </script>
