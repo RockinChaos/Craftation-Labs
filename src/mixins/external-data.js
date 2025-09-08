@@ -7,12 +7,12 @@ const pluginsDefaults = {
         description: "Get custom items on join",
         downloadUrl: null,
         git: "RockinChaos/ItemJoin",
-        spigetUrl: "https://api.spiget.org/v2/resources/12661",
         commits: null,
         lastCommits: null,
         build: null,
         version: null,
         timestamp: null,
+        downloads: ['https://img.shields.io/curseforge/dt/89257.json', 'https://img.shields.io/github/downloads/RockinChaos/ItemJoin/total.json', 'https://img.shields.io/spiget/downloads/12661.json', 'https://img.shields.io/modrinth/dt/8OiYKudu.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'MINECRAFT', color: 'light' }]
     },
     fakecreative: {
@@ -21,13 +21,13 @@ const pluginsDefaults = {
         downloadUrl: null,
         git: "RockinChaos/FakeCreative",
         premiumUrl: "https://www.spigotmc.org/resources/fakecreative.95959/",
-        spigetUrl: "https://api.spiget.org/v2/resources/95959",
         commits: null,
         lastCommits: null,
         build: null,
         version: null,
         timestamp: null,
         premium: true,
+        downloads: ['https://img.shields.io/spiget/downloads/95959.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'PREMIUM', color: 'danger' }, { text: 'MINECRAFT', color: 'light' }]
     },
     cloudsync: {
@@ -36,13 +36,13 @@ const pluginsDefaults = {
         downloadUrl: null,
         git: "RockinChaos/CloudSync",
         premiumUrl: "https://www.spigotmc.org/resources/cloudsync.93382/",
-        spigetUrl: "https://api.spiget.org/v2/resources/93382",
         commits: null,
         lastCommits: null,
         build: null,
         version: null,
         timestamp: null,
         premium: false,
+        downloads: ['https://img.shields.io/github/downloads/RockinChaos/CloudSync/total.json', 'https://img.shields.io/spiget/downloads/93382.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'MINECRAFT', color: 'light' }]
     },
     chaoscore: {
@@ -55,6 +55,7 @@ const pluginsDefaults = {
         build: null,
         version: null,
         timestamp: null,
+        downloads: ['https://img.shields.io/github/downloads/RockinChaos/ChaosCore/total.json'],
         tags: [{ text: 'LIBRARY', color: 'warning' }, { text: 'MINECRAFT', color: 'light' }]
     }
 };
@@ -110,30 +111,55 @@ export default {
     }
 }
 
+function parseDownloads(message) {
+    if (!message) return 0;
+    message = message.toLowerCase().replace(/,/g, "").trim();
+    if (message.endsWith("k")) return Math.round(parseFloat(message) * 1_000);
+    if (message.endsWith("m")) return Math.round(parseFloat(message) * 1_000_000);
+    if (message.endsWith("b")) return Math.round(parseFloat(message) * 1_000_000_000);
+    return parseInt(message, 10) || 0;
+}
+
+async function getDownloadValue(url, attempts = 3, delay = 500) {
+    let lastErr;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+            return await res.json();
+        } catch (err) {
+            lastErr = err
+            if (i < attempts - 1) await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastErr;
+}
+
 async function getDownloads() {
-    let response;
-    let count = 0;
-    for (const name in pluginsDefaults) {
-        const url = state.builds.dev.plugins[name].spigetUrl;
-        if (url != null) {
+    let total = 0;
+    for (const pluginKey in pluginsDefaults) {
+        const plugin = pluginsDefaults[pluginKey];
+        if (!plugin.downloads) continue;
+        for (const url of plugin.downloads) {
             try {
-                response = await axios.get(url);
-                count += response.data.downloads * 2.8; // (* 2.8 temporary) for Bukkit/CurseForge download count.
-            } catch (e) {
-                count += state.downloads;
+                const data = await getDownloadValue(url, 3, 500);
+                let value = parseDownloads(data.message);
+                if (isNaN(value)) value = 0;
+                total += value;
+            } catch (err) {
+                console.warn(`Failed to fetch downloads from ${url}`, err);
             }
         }
     }
-    state.downloads = count;
+    state.downloads = total;
+    return total;
 }
 
 async function getProjects() {
     let count = 0;
-
     for (const name in pluginsDefaults) {
         count++;
     }
-
     state.projects = count;
 }
 
