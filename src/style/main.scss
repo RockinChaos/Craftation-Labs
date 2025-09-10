@@ -29,7 +29,10 @@ $serverinfo-invert: findColorInvert($serverinfo);
 $github: #2dba4e;
 $github-invert: findColorInvert($github);
 
-// Setup $colors to use as bulma classes (e.g. 'is-twitter')
+$app: #e91e63;
+$app-invert: findColorInvert($app);
+
+// Setup $colors to use as bulma classes (e.g. 'is-github')
 $colors: ("white": ($white, $black),
     "black": ($black, $white),
     "light": ($light, $light-invert),
@@ -44,7 +47,8 @@ $colors: ("white": ($white, $black),
     "discord": ($discord, $discord-invert),
     "spigot": ($spigot, $spigot-invert),
     "serverinfo": ($serverinfo, $serverinfo-invert),
-    "github": ($github, $github-invert));
+    "github": ($github, $github-invert),
+    "app": ($app, $app-invert));
 
 // Links
 $link: $primary;

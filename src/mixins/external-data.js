@@ -19,14 +19,13 @@ const pluginsDefaults = {
         name: "FakeCreative",
         description: "A creative mode emulation",
         downloadUrl: null,
+        landingUrl: "https://www.spigotmc.org/resources/fakecreative.95959/",
         git: "RockinChaos/FakeCreative",
-        premiumUrl: "https://www.spigotmc.org/resources/fakecreative.95959/",
         commits: null,
         lastCommits: null,
         build: null,
         version: null,
         timestamp: null,
-        premium: true,
         downloads: ['https://img.shields.io/spiget/downloads/95959.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'PREMIUM', color: 'danger' }, { text: 'MINECRAFT', color: 'light' }]
     },
@@ -42,6 +41,23 @@ const pluginsDefaults = {
         timestamp: null,
         downloads: ['https://img.shields.io/github/downloads/RockinChaos/CloudSync/total.json', 'https://img.shields.io/spiget/downloads/93382.json'],
         tags: [{ text: 'PLUGIN', color: 'info' }, { text: 'MINECRAFT', color: 'light' }]
+    },
+    shiru: {
+        name: "Shiru",
+        description: `🐾 The ultimate torrent-based anime player — lightweight, powerful, and paws-itively fast 🐾<br>
+                      BitTorrent streaming software with no paws in the way—watch anime in real-time, no waiting for downloads!<br><br>
+                      Shiru enhances the anime streaming experience with a feature-rich environment and full mobile support. It blends the power of BitTorrent streaming with the convenience of traditional streaming platforms. This allows you to stream anime in real-time with no waiting for downloads, combining the advantages of high-speed torrents, great video quality, and fast releases — all without ads or tracking.`,
+        downloadUrl: null,
+        landingUrl: "https://github.com/RockinChaos/Shiru/releases/latest",
+        git: "RockinChaos/Shiru",
+        gitOnly: true,
+        commits: null,
+        lastCommits: null,
+        build: null,
+        version: null,
+        timestamp: null,
+        downloads: ['https://img.shields.io/github/downloads/RockinChaos/Shiru/total.json'],
+        tags: [{ text: 'APPLICATION', color: 'app' }, { text: 'WINDOWS', color: 'light' }, { text: 'LINUX', color: 'light' }, { text: 'MACOS', color: 'light' }, { text: 'ANDROID', color: 'light' }]
     },
     chaoscore: {
         name: "ChaosCore",
@@ -85,6 +101,7 @@ const state = Vue.observable({
                 itemjoin: { ...pluginsDefaults.itemjoin },
                 fakecreative: { ...pluginsDefaults.fakecreative },
                 cloudsync: { ...pluginsDefaults.cloudsync },
+                shiru: { ...pluginsDefaults.shiru },
                 chaoscore: { ...pluginsDefaults.chaoscore }
             },
             loading: true,
@@ -193,19 +210,17 @@ function getVersionFromArtifact(name, fileName) {
 }
 
 function parseCommitMessage(commitId, comment) {
-    const lines = comment.split('\u000a');
+    const lines = comment.trim().split(/\u000a/)
     const firstLine = lines[0];
     const typeMatch = firstLine.match(/^(fix|feat|chg|rmvd|chore|bump|bmp|ignore|ign):/);
     const commitType = typeMatch ? typeMatch[1].replace("chg", "change").replace("feat", "added").replace("fix", "fixed").replace("rmvd", "removed") + ':' : 'other:';
     const commitName = typeMatch ? firstLine.split(':')[1].trim() : firstLine.trim();
     const commitDescription = lines.slice(1).join(' ').trim();
-    return (commitName.match(/-RELEASE|-SNAPSHOT/) || commitType.match(/^(bump|bmp|ignore|ign):/))
-        ? null
-        : { commitId, commitType: commitType.charAt(0).toUpperCase() + commitType.slice(1), commitName, commitDescription };
+    return (commitName.match(/-RELEASE|-SNAPSHOT/) || commitType.match(/^(bump|bmp|ignore|ign):/)) ? null : { commitId, commitType: commitType.charAt(0).toUpperCase() + commitType.slice(1), commitName, commitDescription };
 }
 
 async function getCommits(currentCI, name, buildNumber, lastResponse) {
-    let releaseFound = state.builds.stable.plugins[name].premium
+    let releaseFound = state.builds.stable.plugins[name].landingUrl
         ? lastResponse.data.changeSet.items.some(item => item.comment.includes('-RELEASE'))
         : lastResponse.data.artifacts.some(artifact => artifact.fileName.includes('RELEASE'));
     lastResponse.data.changeSet.items.forEach(item => {
@@ -224,7 +239,7 @@ async function getCommits(currentCI, name, buildNumber, lastResponse) {
     while (!stop && buildNumber) {
         try {
             let response = await axios.get(`${currentCI}${buildNumber}/api/json`);
-            const isReleaseArtifact = state.builds.stable.plugins[name].premium
+            const isReleaseArtifact = state.builds.stable.plugins[name].landingUrl
                 ? response.data.changeSet.items.some(item => item.comment.includes('-RELEASE'))
                 : response.data.artifacts.some(artifact => artifact.fileName.includes('RELEASE'));
             if (isReleaseArtifact) {
@@ -260,7 +275,7 @@ async function getJenkins() {
         state.builds.dev.loading = true;
         state.builds.stable.loading = true;
 
-        for (const name in pluginsDefaults) {
+        for (const name in Object.fromEntries(Object.entries(pluginsDefaults).filter(([_, plugin]) => !plugin.gitOnly))) {
             let currentCI = mainCI.replace("job_id", name);
             state.builds.dev.plugins[name].commits = [];
             state.builds.dev.plugins[name].lastCommits = [];
@@ -268,7 +283,7 @@ async function getJenkins() {
 
             let response = await axios.get(`${currentCI}lastSuccessfulBuild/api/json`);
             state.builds.dev.plugins[name].build = response.data.id;
-            state.builds.dev.plugins[name].timestamp = response.data.timestamp;
+            state.builds.dev.plugins[name].timestamp = String(response.data.timestamp);
             state.builds.dev.plugins[name].version = getVersionFromArtifact(state.builds.dev.plugins[name].name, response.data.artifacts[0].displayPath);
             state.builds.dev.plugins[name].downloadUrl = `${currentCI}lastSuccessfulBuild/artifact/${response.data.artifacts[0].relativePath}`;
             getCommits(currentCI, name, (response.data.id - 1), response);
@@ -284,17 +299,25 @@ async function getJenkins() {
     }
 }
 
+function parseBodyCommits(body) {
+    const lines = body.split(/\r?\n/);
+    const firstCommitIndex = lines.findIndex(line => line.match(/^\s*[\*\-]\s*(fix|feat|chg|rmvd|chore|bump|bmp|ignore|ign):/));
+    if (firstCommitIndex === -1) return null;
+    const commitLines = lines.slice(firstCommitIndex).join('\n');
+    const entries = commitLines.split(/\r?\n[\*\-]\s+/).filter(Boolean);
+    return entries.map((entry, index) => parseCommitMessage(null, entry.replace(/^\s*[\*\-]\s*/gm, '\u000a'))).filter(Boolean);
+}
+
 async function getLatestRelease() {
     try {
         state.builds.stable.loading = true;
         for (const name in pluginsDefaults) {
             const { data } = await axios.get('https://api.github.com/repos/' + state.builds.stable.plugins[name].git + '/releases');
+            if (pluginsDefaults[name].gitOnly) state.builds.stable.plugins[name].commits = parseBodyCommits(data[0].body);
             state.builds.stable.plugins[name].version = data[0].tag_name + "-RELEASE";
-            state.builds.stable.plugins[name].timestamp = data[0].created_at;
+            state.builds.stable.plugins[name].timestamp = String(data[0].created_at);
             state.builds.stable.error = null;
-            data[0].assets.forEach(asset => {
-                state.builds.stable.plugins[name].downloadUrl = asset.browser_download_url;
-            });
+            data[0].assets.forEach(asset => state.builds.stable.plugins[name].downloadUrl = asset.browser_download_url);
         }
     } catch (e) {
         state.builds.stable.error = e.response ? e.response.data : e.message;
@@ -303,7 +326,7 @@ async function getLatestRelease() {
 }
 
 async function getDescription() {
-    for (const name in pluginsDefaults) {
+    for (const name in Object.fromEntries(Object.entries(pluginsDefaults).filter(([_, plugin]) => !plugin.gitOnly))) {
         let currentCI = mainCI.replace("job_id", name);
 
         let response = await axios.get(`${currentCI}api/json`);

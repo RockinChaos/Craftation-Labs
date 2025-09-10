@@ -11,7 +11,7 @@
           <ul>
             <li v-for="commit in commits" :key="commit.commitId">
               <b>{{ formatCommit(commit.commitName) }}</b>
-              (<a :href="`https://github.com/${git}/commit/${commit.commitId}`" target="_blank" rel="noopener noreferrer">{{ commit.commitId.substring(0, 7) }}</a>)
+              <span v-if="commit.commitId">(<a :href="`https://github.com/${git}/commit/${commit.commitId}`" target="_blank" rel="noopener noreferrer">{{ commit.commitId.substring(0, 7) }}</a>)</span>
               <ul v-if="commit.commitDescription && commit.commitDescription.trim().length > 0" class="description-list">
                 <li><span v-html="formatCommit(commit.commitDescription)"></span></li>
               </ul>

@@ -32,12 +32,10 @@
 
                     <h1 class="title is-4">Plugins</h1>
 
-
                     <downloads-item
                         v-bind="plugins.itemjoin"
                         :branch="branch"
                     />
-
 
                     <hr type="is-danger">
 
@@ -50,6 +48,18 @@
                         v-bind="plugins.cloudsync"
                         :branch="branch"
                     />
+
+
+                    <hr type="is-danger" v-if="branch === 'stable'">
+
+                    <h1 class="title is-4" v-if="branch === 'stable'">Apps</h1>
+
+                    <downloads-item
+                        v-if="branch === 'stable'"
+                        v-bind="plugins.shiru"
+                        :branch="branch"
+                    />
+
 
                     <hr type="is-danger">
 

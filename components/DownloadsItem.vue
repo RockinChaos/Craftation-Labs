@@ -1,7 +1,7 @@
 <template>
   <div class="content">
     <div class="content">
-      <p v-if="version"> The latest <b>{{ branch }}</b> version of {{ name }} was released on <b>{{ new Date(timestamp).toLocaleString() }}</b>
+      <p v-if="version"> The latest <b>{{ branch }}</b> version of {{ name }} was released on <b>{{ parseTimestamp(timestamp).toLocaleString() }}</b>
         (<span v-if="build"><a :href='`https://ci-dev.craftationgaming.com/job/${name}/${build}`' target="_blank" rel="noopener noreferrer">build {{ build }}</a>, <a :href='`https://github.com/${git}/commits/master`' target="_blank" rel="noopener noreferrer">commit history</a></span><span v-if="branch === 'stable'"><a :href='`https://github.com/${git}/releases`' target="_blank" rel="noopener noreferrer">changelog</a></span>).
       </p>
     </div>
@@ -24,8 +24,8 @@
           <div class="buttons column-margin-top">
             <b-button type="is-info" style="background-color:#776202" v-if="branch !== 'stable'" tag="a" @click="toggleLastCommits">b{{build}} Changes</b-button>
             <b-button type="is-info" tag="a" @click="toggleCommits">Changelog</b-button>
-            <b-button type="is-button-primary" v-if="downloadUrl" tag="a" :href="downloadUrl"> Download </b-button>
-            <b-button type="is-button-secondary" v-if="premium && branch === 'stable'" tag="a" :href="premiumUrl" target="_blank" rel="noopener noreferrer"> Download </b-button>
+            <b-button type="is-button-primary" v-if="downloadUrl && !landingUrl" tag="a" :href="downloadUrl"> Download </b-button>
+            <b-button :type="downloadUrl ? 'is-button-primary' : 'is-button-secondary'" v-if="landingUrl && branch === 'stable'" tag="a" :href="landingUrl" target="_blank" rel="noopener noreferrer"> Download </b-button>
           </div>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default {
             type: String,
             required: false
         },
-        premiumUrl: {
+        landingUrl: {
             type: String,
             required: false
         },
@@ -109,10 +109,6 @@ export default {
         timestamp: {
           type: String,
           required: false
-        },
-        premium: {
-            type: Boolean,
-            required: false
         },
         info: {
             type: String,
@@ -176,6 +172,11 @@ export default {
             tag: true,
             [`is-${tagColor}`]: true
           };
+        },
+        parseTimestamp(timestamp) {
+          if (!timestamp) return new Date();
+          const date = new Date(typeof timestamp === 'string' && /^\d+$/.test(timestamp) ? Number(timestamp) : timestamp);
+          return isNaN(date.getTime()) ? new Date() : date;
         }
     },
     watch: {
