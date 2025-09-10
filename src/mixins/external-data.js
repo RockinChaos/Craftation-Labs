@@ -76,11 +76,11 @@ const pluginsDefaults = {
 
 const state = Vue.observable({
     github: {
-        stars: null,
-        forks: null,
+        stars: JSON.parse(localStorage.getItem('gitStats'))?.stars || 400,
+        forks: JSON.parse(localStorage.getItem('gitStats'))?.forks || 15,
     },
     discord: {
-        members: null,
+        members: JSON.parse(localStorage.getItem('discordMembers'))?.members || 404,
     },
     static: {
         year: new Date().getFullYear(),
@@ -108,7 +108,8 @@ const state = Vue.observable({
             error: null
         }
     },
-    downloads: 200000
+    projects: Object.keys(pluginsDefaults).length,
+    downloads: JSON.parse(localStorage.getItem('downloads'))?.downloads || 200000
 });
 
 export default {
@@ -151,7 +152,11 @@ async function getDownloadValue(url, attempts = 3, delay = 500) {
 }
 
 async function getDownloads() {
+    const now = Date.now();
+    const cachedDownloads = JSON.parse(localStorage.getItem('downloads'));
+    if (cachedDownloads?.timestamp && (now - cachedDownloads.timestamp < 60 * 60_000)) return cachedDownloads.downloads;
     let total = 0;
+    let cache = true;
     for (const pluginKey in pluginsDefaults) {
         const plugin = pluginsDefaults[pluginKey];
         if (!plugin.downloads) continue;
@@ -162,46 +167,54 @@ async function getDownloads() {
                 if (isNaN(value)) value = 0;
                 total += value;
             } catch (err) {
+                cache = false;
                 console.warn(`Failed to fetch downloads from ${url}`, err);
             }
         }
     }
-    state.downloads = total;
+    state.downloads = cache ? total : (cachedDownloads?.downloads || total);
+    if (cache) localStorage.setItem('downloads', JSON.stringify({ downloads: total, timestamp: now }));
     return total;
 }
 
-async function getProjects() {
-    let count = 0;
-    for (const name in pluginsDefaults) {
-        count++;
-    }
-    state.projects = count;
-}
-
 async function getMembers() {
+    const now = Date.now();
+    const cachedMembers = JSON.parse(localStorage.getItem('discordMembers'));
+    if (cachedMembers?.timestamp && (now - cachedMembers.timestamp < 5 * 60_000)) return;
     let members = 0;
+    let cache = true;
     try {
         let response = await axios.get("https://canary.discord.com/api/guilds/291764091239006208/widget.json");
         members = response.data.presence_count;
-    } catch (e) { }
+    } catch (e) {
+        cache = false;
+    }
 
     state.discord.members = members;
+    if (cache) localStorage.setItem('discordMembers', JSON.stringify({ members, timestamp: now }));
 }
 
 async function getStars() {
+    const now = Date.now();
+    const cachedStats = JSON.parse(localStorage.getItem('gitStats'));
+    if (cachedStats?.timestamp && (now - cachedStats.timestamp < 360 * 60_000)) return;
     let stars = 0;
     let forks = 0;
+    let cache = true;
 
     for (const name in pluginsDefaults) {
         try {
             let response = await axios.get('https://api.github.com/repos/' + state.builds.stable.plugins[name].git);
             stars += response.data.stargazers_count;
             forks += response.data.forks_count;
-        } catch (e) { }
+        } catch (e) {
+            cache = false;
+        }
     }
 
-    state.github.stars = stars;
-    state.github.forks = forks;
+    state.github.stars = cache ? stars : (cachedStats?.stars || stars);
+    state.github.forks = cache ? forks : (cachedStats?.forks || forks);
+    if (cache) localStorage.setItem('gitStats', JSON.stringify({ stars, forks, timestamp: now }));
 }
 
 function getVersionFromArtifact(name, fileName) {
@@ -220,6 +233,7 @@ function parseCommitMessage(commitId, comment) {
 }
 
 async function getCommits(currentCI, name, buildNumber, lastResponse) {
+    const now = Date.now();
     let releaseFound = state.builds.stable.plugins[name].landingUrl
         ? lastResponse.data.changeSet.items.some(item => item.comment.includes('-RELEASE'))
         : lastResponse.data.artifacts.some(artifact => artifact.fileName.includes('RELEASE'));
@@ -236,9 +250,23 @@ async function getCommits(currentCI, name, buildNumber, lastResponse) {
         }
     });
     let stop = false;
+    let iterations = 0;
+    const MAX_ITERATIONS = 500;
     while (!stop && buildNumber) {
+        iterations++;
+        if (iterations > MAX_ITERATIONS) {
+            console.error("Runaway loop detected, breaking at build:", buildNumber);
+            break;
+        }
+        const currentBuild = buildNumber;
+        const cachedCommits = JSON.parse(localStorage.getItem(`commits${currentCI}${currentBuild}`));
         try {
-            let response = await axios.get(`${currentCI}${buildNumber}/api/json`);
+            let response;
+            let cache = true;
+            if (cachedCommits?.timestamp && (now - cachedCommits.timestamp < 60 * 60_000)) {
+                response = cachedCommits.response;
+                cache = false;
+            } else response = await axios.get(`${currentCI}${currentBuild}/api/json`);
             const isReleaseArtifact = state.builds.stable.plugins[name].landingUrl
                 ? response.data.changeSet.items.some(item => item.comment.includes('-RELEASE'))
                 : response.data.artifacts.some(artifact => artifact.fileName.includes('RELEASE'));
@@ -257,6 +285,7 @@ async function getCommits(currentCI, name, buildNumber, lastResponse) {
                 });
             }
             buildNumber = response.data.id - 1;
+            if (cache) localStorage.setItem(`commits${currentCI}${currentBuild}`, JSON.stringify({ response, timestamp: now }));
         } catch (e) {
             if (e.response && e.response.status === 404) {
                 buildNumber -= 1;
@@ -272,6 +301,7 @@ const versionRegex = "job_id[a-zA-Z]*-([0-9.]+?(?:-(?:RELEASE|SNAPSHOT|BETA|ALPH
 
 async function getJenkins() {
     try {
+        const now = Date.now();
         state.builds.dev.loading = true;
         state.builds.stable.loading = true;
 
@@ -281,7 +311,13 @@ async function getJenkins() {
             state.builds.dev.plugins[name].lastCommits = [];
             state.builds.stable.plugins[name].commits = [];
 
-            let response = await axios.get(`${currentCI}lastSuccessfulBuild/api/json`);
+            const cachedJenkins = JSON.parse(localStorage.getItem(`jenkins${pluginsDefaults[name].name}`));
+            let response;
+            let cache = true;
+            if (cachedJenkins?.timestamp && (now - cachedJenkins.timestamp < 60_000)) {
+                response = cachedJenkins.response;
+                cache = false;
+            } else response = await axios.get(`${currentCI}lastSuccessfulBuild/api/json`);
             state.builds.dev.plugins[name].build = response.data.id;
             state.builds.dev.plugins[name].timestamp = String(response.data.timestamp);
             state.builds.dev.plugins[name].version = getVersionFromArtifact(state.builds.dev.plugins[name].name, response.data.artifacts[0].displayPath);
@@ -289,6 +325,7 @@ async function getJenkins() {
             getCommits(currentCI, name, (response.data.id - 1), response);
             state.builds.dev.error = null;
             state.builds.stable.error = null;
+            if (cache) localStorage.setItem(`jenkins${pluginsDefaults[name].name}`, JSON.stringify({ response, timestamp: now }));
         }
     } catch (e) {
         state.builds.dev.error = e.response ? e.response.data : e.message;
@@ -305,19 +342,27 @@ function parseBodyCommits(body) {
     if (firstCommitIndex === -1) return null;
     const commitLines = lines.slice(firstCommitIndex).join('\n');
     const entries = commitLines.split(/\r?\n[\*\-]\s+/).filter(Boolean);
-    return entries.map((entry, index) => parseCommitMessage(null, entry.replace(/^\s*[\*\-]\s*/gm, '\u000a'))).filter(Boolean);
+    return entries.map(entry => parseCommitMessage(null, entry.replace(/^\s*[\*\-]\s*/gm, '\u000a'))).filter(Boolean);
 }
 
 async function getLatestRelease() {
     try {
         state.builds.stable.loading = true;
+        const now = Date.now();
         for (const name in pluginsDefaults) {
-            const { data } = await axios.get('https://api.github.com/repos/' + state.builds.stable.plugins[name].git + '/releases');
+            const cachedReleases = JSON.parse(localStorage.getItem(`releases${pluginsDefaults[name].name}`));
+            let data;
+            let cache = true;
+            if (cachedReleases?.timestamp && (now - cachedReleases.timestamp < 5 * 60_000)) {
+                data = cachedReleases.data;
+                cache = false;
+            } else data = (await axios.get('https://api.github.com/repos/' + state.builds.stable.plugins[name].git + '/releases'))?.data;
             if (pluginsDefaults[name].gitOnly) state.builds.stable.plugins[name].commits = parseBodyCommits(data[0].body);
             state.builds.stable.plugins[name].version = data[0].tag_name + "-RELEASE";
             state.builds.stable.plugins[name].timestamp = String(data[0].created_at);
             state.builds.stable.error = null;
             data[0].assets.forEach(asset => state.builds.stable.plugins[name].downloadUrl = asset.browser_download_url);
+            if (cache) localStorage.setItem(`releases${pluginsDefaults[name].name}`, JSON.stringify({ data, timestamp: now }));
         }
     } catch (e) {
         state.builds.stable.error = e.response ? e.response.data : e.message;
@@ -326,16 +371,26 @@ async function getLatestRelease() {
 }
 
 async function getDescription() {
+    const now = Date.now();
     for (const name in Object.fromEntries(Object.entries(pluginsDefaults).filter(([_, plugin]) => !plugin.gitOnly))) {
+        const cachedDescription = JSON.parse(localStorage.getItem(`description${pluginsDefaults[name].name}`))
+        if (cachedDescription?.timestamp && (now - cachedDescription.timestamp < 5 * 60_000)) {
+            state.builds.dev.plugins[name].description = cachedDescription.devDescription;
+            state.builds.stable.plugins[name].description = cachedDescription.releaseDescription;
+            continue;
+        }
         let currentCI = mainCI.replace("job_id", name);
 
         let response = await axios.get(`${currentCI}api/json`);
         let description = response.data.description.split('ci-import">')[1].split('<div class="ci-no-import"')[0];
         let devParts = description.split('<ul class="release-versions"')
-        state.builds.dev.plugins[name].description = devParts[0] + '<ul class="snapshot-versions"' + devParts[1].split('<ul class="legacy-versions"')[1];
+        const devDescription = devParts[0] + '<ul class="snapshot-versions"' + devParts[1].split('<ul class="legacy-versions"')[1];
+        state.builds.dev.plugins[name].description = devDescription;
 
         let releaseParts = description.split('<ul class="snapshot-versions"')
-        state.builds.stable.plugins[name].description = releaseParts[0] + '<ul class="release-versions"' + releaseParts[1].split('<ul class="release-versions"')[1];
+        const releaseDescription = releaseParts[0] + '<ul class="release-versions"' + releaseParts[1].split('<ul class="release-versions"')[1];
+        state.builds.stable.plugins[name].description = releaseDescription;
+        localStorage.setItem(`description${pluginsDefaults[name].name}`, JSON.stringify({ devDescription, releaseDescription, timestamp: now }));
     }
 }
 
@@ -345,4 +400,3 @@ getLatestRelease();
 getMembers();
 getStars();
 getDownloads();
-getProjects();
