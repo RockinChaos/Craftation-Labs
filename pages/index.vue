@@ -19,7 +19,7 @@
                             <h2>Repository</h2>
                             <p>Add support for any of our resources using the built-in API.</p>
                             <p>All our resources with API support can be found on our repository. With 99% uptime and offline support you can easily implement our resources as a dependency and compile as needed.</p>
-                            <a class="button is-primary is-rounded" href="https://repo.craftationgaming.com" target="_blank" rel="noopener noreferrer">View the repository</a>
+                            <a class="button is-primary is-rounded" href="https://repo.craftationgaming.com" target="_blank" rel="noopener noreferrer">View the Repository</a>
                         </div>
                     </div>
                     <div class="tile is-parent row">
@@ -29,8 +29,8 @@
                         <div class="tile is-child">
                             <h2>Wiki</h2>
                             <p>Many of our resources have a lot of features which may get confusing. We do our best to document everything in an easy to digest manner with easy browsing on our wiki.</p>
-                            <p>If you find something is missing, you don't understand, or just need help you can always reach out to us on our <a class="has-text-white" href="https://discord.gg/D5FnJ7C" target="_blank" rel="noopener noreferrer">Discord</a></p>
-                            <saber-link class="button is-primary is-rounded" to="/wiki">Visit the wiki</saber-link>
+                            <p>If you find something is missing, you don't understand, or just need help you can always reach out to us on our <a class="has-text-white" href="https://discord.gg/D5FnJ7C" target="_blank" rel="noopener noreferrer">Discord</a>.</p>
+                            <saber-link class="button is-primary is-rounded" to="/wiki">Visit the Wiki</saber-link>
                         </div>
                     </div>
                    <div class="tile is-parent row">
@@ -40,7 +40,7 @@
                         <div class="tile is-child">
                             <h2>Paste</h2>
                             <p>Create a paste that stores plain-text that you can easily share.</p>
-                            <a class="button is-primary is-rounded" href="https://paste.craftationgaming.com" target="_blank" rel="noopener noreferrer">Create a paste</a>
+                            <a class="button is-primary is-rounded" href="https://paste.craftationgaming.com" target="_blank" rel="noopener noreferrer">Create a Paste</a>
                         </div>
                     </div>
                     <div class="tile is-parent row">
@@ -51,7 +51,7 @@
                             <h2>JavaDocs</h2>
                             <p>Access any of the Minecraft JavaDocs from 1.7 to the latest release.</p>
                             <p>We try to support as many versions of Minecraft as possible, however things change... We host each major Minecraft version's javadocs so you can easily find what you are looking for.</p>
-                            <a class="button is-primary is-rounded" href="https://craftationgaming.com/api/javadocs" target="_blank" rel="noopener noreferrer">Browse the javadocs</a>
+                            <a class="button is-primary is-rounded" href="https://craftationgaming.com/api/javadocs" target="_blank" rel="noopener noreferrer">Browse the JavaDocs</a>
                         </div>
                     </div>
                 </div>
