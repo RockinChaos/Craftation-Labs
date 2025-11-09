@@ -44,9 +44,8 @@ const pluginsDefaults = {
     },
     shiru: {
         name: "Shiru",
-        description: `🐾 The ultimate torrent-based anime player — lightweight, powerful, and paws-itively fast 🐾<br>
-                      BitTorrent streaming software with no paws in the way—watch anime in real-time, no waiting for downloads!<br><br>
-                      Shiru enhances the anime streaming experience with a feature-rich environment and full mobile support. It blends the power of BitTorrent streaming with the convenience of traditional streaming platforms. This allows you to stream anime in real-time with no waiting for downloads, combining the advantages of high-speed torrents, great video quality, and fast releases — all without ads or tracking.`,
+        description: `Manage your personal media library, organize your collection, and stream your content in real time, no waiting required!<br><br>
+                      Shiru designed to enhance your personal media experience with a feature-rich environment and full mobile support. It provides a seamless way to organize, track, and play content you legally own. This lets you enjoy your collection in real time, with fast playback, high-quality video, and a clean, ad-free interface.`,
         downloadUrl: null,
         landingUrl: "https://github.com/RockinChaos/Shiru/releases/latest",
         git: "RockinChaos/Shiru",
